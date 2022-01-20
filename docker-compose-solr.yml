@@ -1,9 +1,39 @@
-version: '3'
+version: "3"
 services:
-    hello-nlp-solr:
-        build: .
-        environment:
-          - PORT=5050
-          - CONFIG_FILE=/app/docker-solr.conf
-        ports:
-          - "5050:5050"
+  # no traefik net!
+  hello-nlp-solr:
+    build: .
+    network_mode: "host"
+    environment:
+      - PORT=5050
+      - CONFIG_FILE=/app/docker-solr.conf
+    # ports:
+    #   - "5050:5050"
+    depends_on:
+      - solr
+
+  solr:
+    image: solr:8.9.0
+    networks:
+      - traefik-net
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    ports:
+      - "8392:8392"
+      - "8983:8983"
+    volumes:
+      - ./volumes/solr_backup:/solr_backup
+    command: "bash -c '/opt/solr/bin/solr start && /opt/solr/bin/solr create_core -c osc-blog && /opt/solr/bin/solr stop && /opt/solr/bin/solr start -f'"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.solr-hello-nlp.rule=Host(`solr.dev.localhost`)
+      - traefik.docker.network=traefik-net
+      - traefik.http.routers.solr-hello-nlp.entrypoints=websecure
+      - traefik.http.routers.solr-hello-nlp.tls=true
+
+networks:
+  traefik-net:
+    name: traefik-net
+    external: true
