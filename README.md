@@ -1,3 +1,13 @@
+# Changes
+
+```sh
+sudo chmod a+rwx -R solr-data/
+```
+
+------------------
+
+
+
 ![Hello-NLP Logo](/ui/img/logo.png)
 
 Hello-NLP is a drop-in microservice to enhance Solr or Elasticsearch with the power of Python NLP.  It is written to be a practical addition to your search relevance stack with minimal learning curve to get you running quickly and efficiently.

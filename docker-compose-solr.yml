@@ -1,19 +1,28 @@
-version: "3"
+version: "3.8"
 services:
   # no traefik net!
   hello-nlp-solr:
     build: .
-    network_mode: "host"
+    # cannot use a differnet user
+    networks:
+      - traefik-net
     environment:
       - PORT=5050
       - CONFIG_FILE=/app/docker-solr.conf
-    # ports:
-    #   - "5050:5050"
+    ports:
+      - "5050:5050"
     depends_on:
       - solr
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.hello-nlp.rule=Host(`hellonlp.dev.localhost`)
+      - traefik.docker.network=traefik-net
+      - traefik.http.routers.hello-nlp.entrypoints=websecure
+      - traefik.http.routers.hello-nlp.tls=true
+      - traefik.http.services.hello-nlp.loadbalancer.server.port=5050 # necessary if not 80/443
 
   solr:
-    image: solr:8.9.0
+    image: solr:8.4.1 # skipchunk tested on 8.4.1
     networks:
       - traefik-net
     deploy:
@@ -25,13 +34,18 @@ services:
       - "8983:8983"
     volumes:
       - ./volumes/solr_backup:/solr_backup
-    command: "bash -c 'solr-precreate osc-blog'"
+      # - ./solr-data/:/var/solr:rw
+    command:
+      - solr-precreate
+      - gettingstarted
+    # command: "bash -c 'solr-precreate osc-blog'"
     labels:
       - traefik.enable=true
       - traefik.http.routers.solr-hello-nlp.rule=Host(`solr.dev.localhost`)
       - traefik.docker.network=traefik-net
       - traefik.http.routers.solr-hello-nlp.entrypoints=websecure
       - traefik.http.routers.solr-hello-nlp.tls=true
+      - traefik.http.services.solr-hello-nlp.loadbalancer.server.port=8983 # necessary if not 80/443
 
 networks:
   traefik-net:
